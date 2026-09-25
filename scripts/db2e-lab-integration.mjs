@@ -11,9 +11,10 @@ const str=(v)=>String(unwrap(v)??"").trim();
 const num=(v)=>Number(unwrap(v));
 const rows=(n)=>XLSX.utils.sheet_to_json(wb.Sheets[n],{defval:"",raw:true});
 const headers=(n)=>XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,blankrows:false,raw:true})[0]||[];
-const did=(r)=>str(r.driver_id||r.person_id||r.id);
-const tid=(r)=>str(r.team_id||r.constructor_id||r.team||r.constructor);
-const yr=(r)=>num(r.year||r.season_year||r.season);
+const own=(r,k)=>r&&Object.prototype.hasOwnProperty.call(r,k)?r[k]:undefined;
+const did=(r)=>str(own(r,"driver_id")||own(r,"person_id")||own(r,"id"));
+const tid=(r)=>str(own(r,"team_id")||own(r,"constructor_id")||own(r,"team")||own(r,"constructor"));
+const yr=(r)=>num(own(r,"year")||own(r,"season_year")||own(r,"season"));
 
 const pDrivers=patch["drivers_patch.json"],pProfiles=patch["driver_rating_profiles_patch.json"],pSnapshots=patch["historical_rating_snapshots_1980_patch.json"],pOpening=patch["driver_opening_state_1980_patch.json"];
 assert.ok(pDrivers&&pProfiles&&pSnapshots&&pOpening,"DB2E patch payload incomplete");
