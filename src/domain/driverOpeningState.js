@@ -14,8 +14,10 @@ const unwrap=(value)=>{
 };
 
 const pick=(row,keys,fallback=undefined)=>{
+  if(!row||typeof row!=="object")return fallback;
   for(const key of keys){
-    const value=unwrap(row?.[key]);
+    if(!Object.prototype.hasOwnProperty.call(row,key))continue;
+    const value=unwrap(row[key]);
     if(value!==undefined&&value!==null&&value!=="")return value;
   }
   return fallback;
