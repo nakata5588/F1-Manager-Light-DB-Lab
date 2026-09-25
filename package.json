@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "build:data": "node scripts/convert-excel.mjs && node scripts/db2e-lab-integration.mjs --overlay-json",
     "validate:data": "node scripts/validate_json.js",
-    "check": "npm run test:career && npm run test:entities && npm run test:drivers && npm run test:simulation && npm run test:management && npm run test:manager && npm run test:management-events && npm run test:management-depth && npm run test:development && npm run test:development-regulations && npm run test:technical-department && npm run test:ai-technical && npm run test:technology-adoption && npm run test:ai-technical-soak && npm run test:save-safety && npm run test:race-entry && npm run test:race-weekend && npm run test:race-strategy && npm run test:live-race && npm run test:track-layout && npm run test:race-control && npm run test:weekend-weather && npm run test:injuries && npm run test:health && npm run test:replacements && npm run test:ai-reserves && npm run test:negotiations && npm run test:roles && npm run test:opening-state && npm run test:season-packs && npm run validate:data && npm run build",
+    "check": "npm run test:career && npm run test:entities && npm run test:drivers && npm run test:simulation && npm run test:management && npm run test:manager && npm run test:management-events && npm run test:management-depth && npm run test:development && npm run test:development-regulations && npm run test:technical-department && npm run test:ai-technical && npm run test:technology-adoption && npm run test:ai-technical-soak && npm run test:save-safety && npm run test:race-entry && npm run test:race-weekend && npm run test:race-strategy && npm run test:live-race && npm run test:track-layout && npm run test:race-control && npm run test:weekend-weather && npm run test:injuries && npm run test:health && npm run test:replacements && npm run test:ai-reserves && npm run test:negotiations && npm run test:roles && npm run test:opening-state && npm run test:season-packs && npm run test:db2e:runtime && npm run validate:data && npm run build",
     "dev:all": "npm-run-all -p dev watch:data",
     "watch:data": "chokidar \"data/**/*.xlsx\" -c \"npm run season:generate\"",
     "predev": "npm run season:generate",
@@ -45,7 +45,9 @@
     "test:development-regulations": "node --test tests/developmentRegulations.test.js",
     "test:technical-department": "node --test tests/technicalDepartment.test.js tests/playerTechnicalLifecycle.test.js tests/nextSeasonCar.test.js tests/nextSeasonRegulations.test.js tests/technicalKnowledge.test.js",
     "test:manager": "node --test tests/managerProfile.test.js",
-    "test:track-layout": "node --test tests/trackLayout.test.js"
+    "test:track-layout": "node --test tests/trackLayout.test.js",
+    "test:db2e:runtime": "node --test tests/db2eIntegration.test.js",
+    "test:db2e": "npm run season:generate:test-years && npm run test:db2e:runtime"
   },
   "keywords": [
     "f1",
