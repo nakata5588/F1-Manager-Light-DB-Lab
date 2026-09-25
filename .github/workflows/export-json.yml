@@ -56,6 +56,17 @@ jobs:
       - name: Export Excel to runtime JSON
         run: npm run build:data
 
+      - name: DB2E focused 1980 Season Pack diagnostic
+        run: |
+          npm run season:generate:test-years
+          node --input-type=module - <<'NODE'
+          import fs from "node:fs";
+          const p=JSON.parse(fs.readFileSync("public/data/seasons/1980/season.json","utf8"));
+          console.log("DB2E_1980_TEAMS",JSON.stringify((p.state?.teams||[]).map(t=>({id:t.team_id,name:t.team_name||t.name}))));
+          const shadow=(p.state?.teams||[]).find(t=>String(t.team_name||t.name)==="Shadow");
+          console.log("DB2E_SHADOW",JSON.stringify((p.state?.contracts||[]).filter(x=>shadow&&String(x.team_id)===String(shadow.team_id)).map(x=>({driver_id:x.driver_id,driver_name:x.driver_name,role:x.role,source:x.source}))));
+          NODE
+
       - name: Test career season boundary
         run: npm run test:career
 
