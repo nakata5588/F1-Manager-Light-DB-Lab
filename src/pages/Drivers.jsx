@@ -179,7 +179,20 @@ export default function Drivers(){
   }),[drivers,contractById,activePlayerByDriver,activeTransferByDriver,teamNames,gs]);
 
   const teamOptions=useMemo(()=>["ALL",...Array.from(new Set(rows.map(r=>r.team_name).filter(v=>v&&v!=="—"))).sort()],[rows]);
-  const statusOptions=["ALL","Contracted","Negotiating","Free","Academy","Other Series","Prospect","Youth","Lower Series","Team Commitment","Status Review","Retired","Unavailable","Available"];
+  const statusCounts=useMemo(()=>{
+    const counts=new Map();
+    for(const row of rows){
+      const key=String(row.market_status||"Available");
+      counts.set(key,(counts.get(key)||0)+1);
+    }
+    return counts;
+  },[rows]);
+  const statusOptions=useMemo(()=>{
+    const preferred=["Contracted","Negotiating","Free","Academy","Other Series","Prospect","Youth","Lower Series","Team Commitment","Status Review","Retired","Unavailable","Available"];
+    const present=new Set([...statusCounts.entries()].filter(([,count])=>count>0).map(([key])=>key));
+    const ordered=preferred.filter((key)=>present.delete(key));
+    return ["ALL",...ordered,...[...present].sort()];
+  },[statusCounts]);
 
   const filtered=useMemo(()=>{
     const n=q.trim().toLowerCase();
@@ -237,7 +250,7 @@ export default function Drivers(){
           className={"rounded-md border px-3 py-2 text-sm " + (status==="Free" ? "border-sky-400/30 bg-sky-500/15 text-sky-200" : "border-white/10 bg-[#171a23] text-slate-200")}
           onClick={()=>{setStatus(status==="Free"?"ALL":"Free");setPage(1);}}
         >Free Drivers</button>
-        <select className="rounded-md border border-white/10 bg-[#171a23] px-3 py-2 text-sm text-slate-100" value={status} onChange={e=>{setStatus(e.target.value);setPage(1);}}>{statusOptions.map(v=><option key={v}>{v}</option>)}</select>
+        <select className="rounded-md border border-white/10 bg-[#171a23] px-3 py-2 text-sm text-slate-100" value={status} onChange={e=>{setStatus(e.target.value);setPage(1);}}>{statusOptions.map(v=><option key={v} value={v}>{v==="ALL"?`ALL (${rows.length})`:`${v} (${statusCounts.get(v)||0})`}</option>)}</select>
         <select className="rounded-md border border-white/10 bg-[#171a23] px-3 py-2 text-sm text-slate-100" value={team} onChange={e=>{setTeam(e.target.value);setPage(1);}}>{teamOptions.map(v=><option key={v}>{v}</option>)}</select>
         <select className="rounded-md border border-white/10 bg-[#171a23] px-3 py-2 text-sm text-slate-100" value={sortKey} onChange={e=>setSortKey(e.target.value)}>{headers.map(([k,l])=><option key={k} value={k}>Sort: {l}</option>)}</select>
         <button className="rounded-md border border-white/10 bg-[#171a23] px-3 py-2 text-sm text-slate-100" onClick={()=>setSortDir(d=>d==="asc"?"desc":"asc")}>{sortDir==="asc"?"Asc ↑":"Desc ↓"}</button>
