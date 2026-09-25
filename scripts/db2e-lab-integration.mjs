@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import zlib from "node:zlib";
 import XLSX from "xlsx";
 
@@ -75,6 +76,31 @@ for(const s of snapshots1980){
 for(const c of contracts1980){const id=did(c);if(!id||generated.has(id))continue;const d=driverById.get(id)||{};generated.set(id,contractOpening(id,c,str(d.display_name||c.driver_name||id)));}
 for(const r of pOpening)generated.set(did(r),{...r});
 
+// DB2E opening-state correction: Shadow entered David Kennedy as car #18 from
+// the opening 1980 rounds. Geoff Lees only joined the #17 later, so neither
+// the stale test-driver label nor later-season substitution may define Jan 1.
+if(driverById.has("d_0225")){
+  generated.set("d_0225",{
+    year:1980,
+    opening_date:"1980-01-01",
+    driver_id:"d_0225",
+    display_name:"David Kennedy",
+    opening_world_status:"F1_CONTRACTED_RACE_SEAT",
+    opening_availability:"F1_CONTRACTED",
+    opening_team_id:"t_0015",
+    opening_team_name:"Shadow",
+    opening_role:"second_driver",
+    series_context:"FORMULA_1",
+    runtime_visibility:"ACTIVE_WORLD",
+    runtime_market_policy:"TRANSFER_RULES",
+    confidence:"MEDIUM",
+    qa_status:"PRESEASON_SHADOW_OPENING_REVIEW",
+    source_ids:"SHADOW_1980_OPENING_REVIEW",
+    season_world_status_reference:"OPENING_ENTRY",
+    notes:"Opening Shadow #18 race seat. Geoff Lees is a later-season replacement and is not backdated to Jan 1."
+  });
+}
+
 assert.equal(pOpening.filter(r=>str(r.opening_team_id)).length,0,"DB2E newcomers must not receive invented F1 team commitments");
 assert.equal(pSnapshots.filter(r=>str(r.data_cutoff)!=="1979-12-31").length,0,"DB2E snapshots must use 1979-12-31 cutoff");
 const opening1980=[...generated.values()].sort((a,b)=>did(a).localeCompare(did(b)));
@@ -95,6 +121,48 @@ const daniel=opening1980.find(r=>did(r)==="d_0880");
 assert.equal(str(daniel.opening_world_status),"NEEDS_RESEARCH");
 assert.equal(str(daniel.opening_availability),"MARKET_STATUS_RESEARCH");
 assert.ok(str(daniel.runtime_market_policy).includes("BLOCK_DIRECT_NEGOTIATION"));
+
+if(process.argv.includes("--overlay-json")){
+  const dataDir="public/data";
+  const readJson=(name)=>JSON.parse(fs.readFileSync(`${dataDir}/${name}`,"utf8"));
+  const writeJson=(name,data)=>fs.writeFileSync(`${dataDir}/${name}`,JSON.stringify(data,null,2)+"\n","utf8");
+  const appendBy=(base,add,keyFn)=>{
+    const out=[...base],seen=new Set(base.map(keyFn).filter(Boolean));
+    for(const row of add){
+      const key=keyFn(row);
+      if(!key||seen.has(key))continue;
+      out.push(row);seen.add(key);
+    }
+    return out;
+  };
+  const normalizeDriver=(row)=>({
+    ...row,
+    id:row.driver_id,
+    name:row.display_name,
+    nationality:row.country_name||row.country_code||null,
+    birthdate:row.dob||null,
+    birthdate_iso:row.dob||null,
+    prefered_number:row.prefered_number==null?null:Number(row.prefered_number),
+  });
+  const jsonDrivers=appendBy(readJson("drivers.json"),pDrivers.map(normalizeDriver),did);
+  const jsonProfiles=appendBy(readJson("driver_rating_profiles.json"),pProfiles,did);
+  const jsonSnapshots=appendBy(readJson("historical_rating_snapshots.json"),pSnapshots,r=>`${yr(r)}|${did(r)}`);
+  let jsonOpening=[];
+  try{jsonOpening=readJson("driver_opening_state.json").filter(r=>yr(r)!==1980);}catch{}
+  jsonOpening.push(...opening1980);
+  writeJson("drivers.json",jsonDrivers);
+  writeJson("driver_rating_profiles.json",jsonProfiles);
+  writeJson("historical_rating_snapshots.json",jsonSnapshots);
+  writeJson("driver_opening_state.json",jsonOpening);
+  console.log("DB2E JSON overlay applied",JSON.stringify({
+    drivers:jsonDrivers.length,
+    profiles:jsonProfiles.length,
+    snapshots1980:jsonSnapshots.filter(r=>yr(r)===1980).length,
+    opening1980:opening1980.length,
+    openingRaceSeats:opening1980.filter(r=>str(r.opening_world_status)==="F1_CONTRACTED_RACE_SEAT").length
+  }));
+  process.exit(0);
+}
 
 for(const id of expectedIds){
   assert.ok(new Set(rows("drivers").map(did)).has(id),`drivers missing ${id}`);
