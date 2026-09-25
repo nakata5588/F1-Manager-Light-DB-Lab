@@ -67,12 +67,27 @@ for(const year of targetYears){
     }
 
     const driverContracts=(state.contracts||[]).filter(isRaceDriverContract);
+    const openingRows=Array.isArray(state.driverOpeningState)?state.driverOpeningState:[];
+    const openingAuthoritative=openingRows.length>0;
     const assignedDriverIds=new Set();
     for(const team of state.teams){
       const tid=String(team.team_id);
       const seats=driverContracts.filter((row)=>String(row.team_id)===tid);
-      assert.ok(seats.length>=2,`${year} team ${tid} must start with at least two drivers, found ${seats.length}`);
-      for(const seat of seats.slice(0,2)){
+      if(openingAuthoritative){
+        const openingSeats=openingRows.filter((row)=>
+          String(row.opening_team_id||"")===tid
+          &&String(row.opening_world_status||"")==="F1_CONTRACTED_RACE_SEAT"
+        );
+        assert.equal(
+          seats.length,
+          openingSeats.length,
+          `${year} team ${tid} must preserve its era-aware opening race-seat count`
+        );
+        assert.ok(seats.length>=1,`${year} team ${tid} must have at least one opening race entry`);
+      }else{
+        assert.ok(seats.length>=2,`${year} team ${tid} must start with at least two drivers, found ${seats.length}`);
+      }
+      for(const seat of seats){
         const did=String(seat.driver_id);
         assert.equal(assignedDriverIds.has(did),false,`${year} driver ${did} cannot occupy two starting teams`);
         assignedDriverIds.add(did);
@@ -108,16 +123,17 @@ test("derived F1 history covers the sparse manual-career eras",async()=>{
 });
 
 
-test("1980 Shadow keeps test drivers separate from its two race seats",async()=>{
+test("1980 Shadow opening state uses Johansson and Kennedy, not later replacement Lees",async()=>{
   const pack=await readPack(1980);
   const shadow=(pack.state.teams||[]).find((t)=>String(t.team_name||t.name)==="Shadow");
   assert.ok(shadow,"1980 Shadow must exist");
   const contracts=(pack.state.contracts||[]).filter((c)=>String(c.team_id)===String(shadow.team_id));
   const raceSeats=contracts.filter(isRaceDriverContract);
-  const testDrivers=contracts.filter((c)=>/test|reserve/i.test(String(c.role||"")));
-  assert.ok(raceSeats.length>=2,"Shadow must have two race seats, found "+raceSeats.length);
-  assert.ok(testDrivers.length>=1,"Shadow test-driver contract should remain available without occupying a race seat");
-  assert.equal(raceSeats.some((c)=>String(c.driver_id)==="d_0862"),false,"David Kennedy test_driver must not be treated as a race seat");
+  const ids=new Set(raceSeats.map((c)=>String(c.driver_id)));
+  assert.equal(raceSeats.length,2,"Shadow must open 1980 with its two race entries");
+  assert.ok(ids.has("d_0140"),"Stefan Johansson must occupy Shadow #17 at the opening");
+  assert.ok(ids.has("d_0225"),"David Kennedy must occupy Shadow #18 at the opening");
+  assert.equal(ids.has("d_0209"),false,"Geoff Lees is a later replacement and must not be backdated to Jan 1");
 });
 
 
