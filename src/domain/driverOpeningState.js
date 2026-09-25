@@ -213,9 +213,9 @@ export function openingMarketLabel(driver,year){
   if(availability==="RETIRED_UNAVAILABLE"||world==="RETIRED")return "Retired";
   if(availability==="DECEASED_UNAVAILABLE"||world==="DECEASED")return "Unavailable";
   if(availability==="MARKET_STATUS_RESEARCH")return "Status Review";
+  if(world==="PROSPECT")return Number.isFinite(age)&&age<=19?"Youth":"Prospect";
   if(availability==="OTHER_SERIES_COMMITMENT"||availability==="ACTIVE_OTHER_SERIES_NO_F1_SEAT")return "Other Series";
   if(availability==="F1_TEAM_COMMITMENT_NON_RACE")return "Team Commitment";
-  if(world==="PROSPECT")return Number.isFinite(age)&&age<=19?"Youth":"Prospect";
   if(world==="OUT_OF_F1_NO_SEAT")return "Free";
   return null;
 }
