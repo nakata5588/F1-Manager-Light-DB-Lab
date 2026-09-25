@@ -64,6 +64,9 @@ jobs:
           console.log("DB2E_SHADOW",JSON.stringify((p.state?.contracts||[]).filter(x=>shadow&&String(x.team_id)===String(shadow.team_id)).map(x=>({driver_id:x.driver_id,driver_name:x.driver_name,role:x.role,source:x.source}))));
           NODE
 
+      - name: Final DB2E runtime audit
+        run: npm run test:db2e:runtime
+
       - name: Test career season boundary
         run: npm run test:career
 
