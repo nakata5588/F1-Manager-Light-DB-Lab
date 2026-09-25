@@ -50,9 +50,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Stage DB2E v21 into ephemeral workbook
-        run: node scripts/db2e-lab-integration.mjs --apply
-
       - name: Export Excel to runtime JSON
         run: npm run build:data
 
