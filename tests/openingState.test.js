@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { materializeSeasonPack } from "../src/data/seasonPackMaterializer.js";
 import { f1HireEligibility } from "../src/domain/driverEligibility.js";
+import { openingTeamId } from "../src/domain/driverOpeningState.js";
 
 function rating(driverId,current=65,peak=80){
   return {
@@ -155,4 +156,10 @@ test("Academy-only opening prospects cannot jump directly from karting to an F1 
     true,
     "Academy-only opening policy must not become a permanent historical debut lock after rollover"
   );
+});
+
+
+test("opening team lookup ignores inherited Object.constructor",()=>{
+  const row={year:1980,driver_id:"NO_TEAM",opening_team_id:null};
+  assert.equal(openingTeamId(row),"");
 });
